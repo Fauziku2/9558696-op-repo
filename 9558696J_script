@@ -15,7 +15,7 @@ puppet resource file /operate/9558696J ensure=absent force=true
 puppet resource file /operate/9558696J ensure=directory
 
 # Clone the repo
-cd /operate/9558696j
+cd /operate/9558696J
 git clone https://github.com/Fauziku2/9558696J-op-repo.git
 
 # Replace index.html
