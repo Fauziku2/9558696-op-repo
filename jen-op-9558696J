@@ -12,7 +12,7 @@ pipeline {
         docker commit 9558696j-qa-svr qa-bkup-image
 
         # Create necessary directory
-        mkdir -p /tmp/operate/9558696J
+        # mkdir -p /tmp/operate/9558696J
 
         # Ensure /tmp/operate/9558696J is clean and usable
         puppet resource file /tmp/operate/9558696J ensure=absent force=true
