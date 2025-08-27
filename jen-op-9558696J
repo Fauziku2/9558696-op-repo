@@ -25,7 +25,7 @@ pipeline {
         git clone https://github.com/Fauziku2/9558696J-op-repo.git
 
         # Locate and run the bolt script
-        locate_script='/tmp/operate/9558696J-op-repo/9558696J_script'
+        locate_script='/tmp/operate/9558696J/9558696J-op-repo/9558696J_script'
         bolt script run $locate_script -t 9558696j-qa-svr.localdomain -u clientadm -p user123 --no-host-key-check --run-as root --no-tty
         '''
       }
