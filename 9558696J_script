@@ -11,13 +11,13 @@ puppet resource package apache2 ensure=present
 puppet resource service apache2 ensure=running
 
 # Clean and recreate working directory
-puppet resource file /operate/9558696j ensure=absent force=true
-puppet resource file /operate/9558696j ensure=directory
+puppet resource file /operate/9558696J ensure=absent force=true
+puppet resource file /operate/9558696J ensure=directory
 
 # Clone the repo
 cd /operate/9558696j
-git clone https://github.com/Fauziku2/9558696j-op-repo.git
+git clone https://github.com/Fauziku2/9558696J-op-repo.git
 
 # Replace index.html
-cp -p /operate/9558696j/9558696j-op-repo/index-op-9558696j.html /var/www/html/index.html
+cp -p /operate/9558696J/9558696J-op-repo/index-op-9558696J.html /var/www/html/index.html
 
