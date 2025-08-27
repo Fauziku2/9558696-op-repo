@@ -11,7 +11,7 @@ pipeline {
                 docker commit 9558696j-qa-svr qa-bkup-image
 
                 # Run Bolt script to update QA server
-                bolt script run '/home/dockeradm/9558696j-script' \
+                bolt script run '/home/dockeradm/9558696J-script' \
                   --targets 9558696j-qa-svr.localdomain \
                   --user root --no-host-key-check --transport ssh
 
@@ -63,7 +63,7 @@ pipeline {
                 docker commit 9558696j-prod-svr prod-bkup-image
 
                 # Run Bolt script to update Prod server
-                bolt script run '/home/dockeradm/9558696j-script' \
+                bolt script run '/home/dockeradm/9558696J-script' \
                   --targets 9558696j-prod-svr.localdomain \
                   --user root --no-host-key-check --transport ssh
 
