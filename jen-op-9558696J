@@ -4,7 +4,9 @@ pipeline {
   stages {
     stage('Op-9558696J-S1: Backup and Update QA') {
       steps {
-        sh '''#!/bin/bash
+        sh '''
+        #!/bin/bash
+
         # Remove old QA backup image if exists
         docker image rm -f qa-bkup-image || true
 
@@ -18,15 +20,20 @@ pipeline {
         puppet resource file /tmp/operate/9558696J ensure=absent force=true
         puppet resource file /tmp/operate/9558696J ensure=directory
 
-        # Clone repo
+        # Clone the repo
         cd /tmp/operate/9558696J
         git clone https://github.com/Fauziku2/9558696J-op-repo.git
 
         # Locate and run the bolt script
-        locate_script='/tmp/operate/9558696J/9558696J-op-repo/9558696J_script'
-        bolt script run $locate_script -t 9558696j-qa-svr.localdomain -u clientadm -p user123 --no-host-key-check
+        locate_script='/tmp/operate/9558696J-op-repo/9558696J_script'
+        bolt script run $locate_script \
+          -t 9558696j-qa-svr.localdomain \
+          -u clientadm \
+          -p user123 \
+          --no-host-key-check \
+          --run-as root \
+          --no-tty
         '''
-        echo 'Op-9558696J-S1: QA web server is backup and updated'
       }
     }
 
