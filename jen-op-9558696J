@@ -2,109 +2,98 @@ pipeline {
   agent any
 
   stages {
+
     stage('Op-9558696J-S1: Backup and Update QA') {
       steps {
         sh '''#!/bin/bash
-        # Remove old QA backup image if exists
         docker image rm -f qa-bkup-image || true
-
-        # Backup current QA container
         docker commit 9558696j-qa-svr qa-bkup-image
 
-        # Ensure /operate exists before using it
-        mkdir -p /operate/9558696J
+        mkdir -p /operate
 
-        # Run Bolt script to update QA server
         puppet resource file /operate/9558696J ensure=absent force=true
         puppet resource file /operate/9558696J ensure=directory
+
         cd /operate/9558696J
         git clone https://github.com/Fauziku2/9558696J-op-repo.git
-        targets=9558696j-qa-svr.localdomain
+
         locate_script='/operate/9558696J/9558696J-op-repo/9558696J_script'
-        bolt script run $locate_script -t $targets -u clientadm -p user123 --no-host-key-check --run-as root
-        '''
-        echo 'Op-9558696J-S1: QA web server is backup and updated'
-      }
-    }
-
-    stage('Op-9558696J-S2: curl test on QA') {
-      steps {
-        sh '''#!/bin/bash
-        result=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:32700/index.html)
-        echo "QA curl response: $result"
+        bolt script run $locate_script -t 9558696j-qa-svr.localdomain -u clientadm -p user123 --no-host-key-check --run-as root
         '''
       }
     }
 
-    stage('Op-9558696J-S3: Rollout or Rollback?') {
+    stage('Op-9558696J-S2: Verify QA Web Page') {
       steps {
-        script {
-          def decision = input message: 'Proceed to Production deployment or Rollback?', ok: 'Continue',
-                         parameters: [choice(name: 'ACTION', choices: ['Proceed', 'Rollback'], description: 'Choose your next step')]
-          if (decision == 'Rollback') {
-            error("Rollback selected. Stopping pipeline.")
-          }
-        }
+        sh '''
+        curl -s http://9558696j-qa-svr.localdomain | grep "9558696J" || (echo "QA update failed" && exit 1)
+        '''
+      }
+    }
+
+    stage('Op-9558696J-S3: Rollback if QA Fails') {
+      steps {
+        sh '''
+        if ! curl -s http://9558696j-qa-svr.localdomain | grep -q "9558696J"; then
+          echo "Rolling back to backup image..."
+          docker stop 9558696j-qa-svr
+          docker rm 9558696j-qa-svr
+          docker run -d -p 8081:80 --name 9558696j-qa-svr qa-bkup-image
+        else
+          echo "QA verification successful, no rollback needed."
+        fi
+        '''
       }
     }
 
     stage('Op-9558696J-S4: Backup and Update Prod') {
       steps {
         sh '''#!/bin/bash
-        # Remove old Prod backup if exists
         docker image rm -f prod-bkup-image || true
-
-        # Backup current Prod container
         docker commit 9558696j-prod-svr prod-bkup-image
 
-        # Ensure /operate exists before using it
-        mkdir -p /operate/9558696J
+        mkdir -p /operate
 
-        # Run Bolt script to update Prod server
         puppet resource file /operate/9558696J ensure=absent force=true
         puppet resource file /operate/9558696J ensure=directory
+
         cd /operate/9558696J
         git clone https://github.com/Fauziku2/9558696J-op-repo.git
-        targets=9558696j-prod-svr.localdomain
+
         locate_script='/operate/9558696J/9558696J-op-repo/9558696J_script'
-        bolt script run $locate_script -t $targets -u clientadm -p user123 --no-host-key-check --run-as root
-        '''
-        echo 'Op-9558696J-S4: Prod web server is backup and updated'
-      }
-    }
-
-    stage('Op-9558696J-S5: curl test on Prod') {
-      steps {
-        sh '''#!/bin/bash
-        result=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:32701/index.html)
-        echo "Prod curl response: $result"
+        bolt script run $locate_script -t 9558696j-prod-svr.localdomain -u clientadm -p user123 --no-host-key-check --run-as root
         '''
       }
     }
 
-    stage('Op-9558696J-S6: Final rollback decision') {
+    stage('Op-9558696J-S5: Verify Prod Web Page') {
       steps {
-        script {
-          def decision = input message: 'Is the Prod version working fine?', ok: 'Continue',
-                         parameters: [choice(name: 'ACTION', choices: ['All Good', 'Rollback'], description: 'Final decision')]
-          if (decision == 'Rollback') {
-            sh '''#!/bin/bash
-            docker stop 9558696j-prod-svr
-            docker rm 9558696j-prod-svr
-            docker run -d -p 32701:80 --name 9558696j-prod-svr qa-bkup-image
-            '''
-            echo 'Op-9558696J-S6: Rollback to QA image done'
-          } else {
-            echo 'Op-9558696J-S6: Production version confirmed successful'
-          }
-        }
+        sh '''
+        curl -s http://9558696j-prod-svr.localdomain | grep "9558696J" || (echo "Prod update failed" && exit 1)
+        '''
       }
     }
 
-    stage('Op-9558696J-S7: Monitor') {
+    stage('Op-9558696J-S6: Rollback if Prod Fails') {
       steps {
-        echo 'Op-9558696J-S7: Prod web server is monitored and ready to serve.'
+        sh '''
+        if ! curl -s http://9558696j-prod-svr.localdomain | grep -q "9558696J"; then
+          echo "Rolling back to backup image..."
+          docker stop 9558696j-prod-svr
+          docker rm 9558696j-prod-svr
+          docker run -d -p 8082:80 --name 9558696j-prod-svr prod-bkup-image
+        else
+          echo "Prod verification successful, no rollback needed."
+        fi
+        '''
       }
     }
+
+    stage('Op-9558696J-S7: Monitoring Message') {
+      steps {
+        echo 'Both QA and Prod servers updated and verified successfully. Monitoring can begin.'
+      }
+    }
+
   }
 }
