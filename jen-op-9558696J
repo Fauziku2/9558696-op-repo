@@ -95,12 +95,6 @@ pipeline {
     stage('Op-9558696J-S5') {
       steps {
         sh '''#!/bin/bash
-        result=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:32701/index.html)
-        echo "Prod curl response: $result"
-        '''
-      }
-      steps {
-        sh '''#!/bin/bash
         curl -Is http://localhost:33500 | head -n 1 > /tmp/prod-result-file
         grep 'HTTP/1.1 200 OK' /tmp/prod-result-file || { echo "Prod test failed"; exit 1; }
         '''
