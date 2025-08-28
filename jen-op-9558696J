@@ -34,7 +34,7 @@ pipeline {
         docker image rm -f ${QA_IMAGE_BKUP} || true
 
         # Backup current QA container
-        docker commit $QA_CONTAINER ${QA_IMAGE_BKUP}
+        docker commit ${QA_CONTAINER} ${QA_IMAGE_BKUP}
 
         # Create necessary directory
         mkdir -p ${OPERATE_DIR}
