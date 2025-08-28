@@ -59,10 +59,6 @@ pipeline {
 
             # Install and start SSH inside container
             docker exec 9558696j-qa-svr bash -c "apt-get update && apt-get install -y openssh-server && service ssh start && service apache2 start"
-
-            # Locate and run the bolt script
-            # locate_script='/tmp/operate/9558696J/9558696J-op-repo/9558696J_script'
-            # bolt script run $locate_script -t 9558696j-qa-svr.localdomain -u clientadm -p user123 --no-host-key-check --run-as root --no-tty
             '''
             error("Op-9558696J-S3: QA server fails after update and is rolled back")
           }
