@@ -47,7 +47,7 @@ pipeline {
         script {
           def decision = input message: 'Proceed to Production deployment or Rollback?', ok: 'Continue',
                          parameters: [choice(name: 'ACTION', choices: ['Proceed to Roll out to Prod server', 'Roll back QA server'], description: 'Choose your next step')]
-          if (decision == 'Rollback') {
+          if (decision == 'Roll back QA server') {
             sh '''#!/bin/bash
             # Stop and Remove current QA container
             docker stop 9558696j-qa-svr || true
@@ -107,7 +107,7 @@ pipeline {
         script {
           def decision = input message: 'Is the Prod version working fine?', ok: 'Continue',
                          parameters: [choice(name: 'ACTION', choices: ['Proceed to release Prod web server to production', 'Roll back Prod web server'], description: 'Final decision')]
-          if (decision == 'Rollback') {
+          if (decision == 'Roll back Prod web server') {
             sh '''#!/bin/bash
             # Stop and Remove current Prod container
             docker stop 9558696j-prod-svr || true
