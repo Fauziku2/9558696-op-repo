@@ -28,8 +28,6 @@ pipeline {
     stage('Op-9558696J-S1') {
       steps {
         sh """
-        #!/bin/bash
-
         # Remove old QA backup image if exists
         docker image rm -f ${QA_IMAGE_BKUP} || true
 
@@ -57,8 +55,6 @@ pipeline {
     stage('Op-9558696J-S2') {
       steps {
         sh """
-        #!/bin/bash
-
         curl -Is http://localhost:${QA_PORT} | head -n 1 > /tmp/qa-result-file
         grep 'HTTP/1.1 200 OK' /tmp/qa-result-file || { echo "QA test failed"; exit 1; }
         """
@@ -72,7 +68,7 @@ pipeline {
           def decision = input message: 'Proceed to Production deployment or Rollback?', ok: 'Continue',
                          parameters: [choice(name: 'ACTION', choices: ['Proceed to Roll out to Prod server', 'Roll back QA server'], description: 'Choose your next step')]
           if (decision == 'Roll back QA server') {
-            sh """#!/bin/bash
+            sh """
             # Stop and Remove current QA container
             docker stop ${QA_CONTAINER} || true
             docker rm ${QA_CONTAINER} || true
@@ -98,8 +94,6 @@ pipeline {
     stage('Op-9558696J-S4') {
       steps {
         sh """
-        #!/bin/bash
-
         # Remove old Prod backup image if exists
         docker image rm -f ${PROD_IMAGE_BKUP} || true
 
@@ -120,8 +114,6 @@ pipeline {
     stage('Op-9558696J-S5') {
       steps {
         sh """
-        #!/bin/bash
-
         curl -Is http://localhost:${PROD_PORT} | head -n 1 > /tmp/prod-result-file
         grep 'HTTP/1.1 200 OK' /tmp/prod-result-file || { echo "Prod test failed"; exit 1; }
         """
@@ -136,8 +128,6 @@ pipeline {
                          parameters: [choice(name: 'ACTION', choices: ['Proceed to release Prod web server to production', 'Roll back Prod web server'], description: 'Final decision')]
           if (decision == 'Roll back Prod web server') {
             sh """
-            #!/bin/bash
-
             # Stop and Remove current Prod container
             docker stop ${PROD_CONTAINER} || true
             docker rm ${PROD_CONTAINER} || true
