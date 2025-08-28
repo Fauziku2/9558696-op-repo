@@ -47,6 +47,11 @@ pipeline {
                          parameters: [choice(name: 'ACTION', choices: ['Proceed', 'Rollback'], description: 'Choose your next step')]
           if (decision == 'Rollback') {
             error("Rollback selected. Stopping pipeline.")
+            docker stop 9558696-qa-svr || true
+            docker rm 9558696-qa-svr || true
+
+            docker run -dit --name 9558696-qa-svr --hostname=9558696j-qa-svr.localdomain --net customnetwork --ip 192.168.100.110 -p 33200:80 qa_bkup_image /bin/bash
+            error("Op-9558696J-S3: QA server fails after update and is rolled back")
           }
         }
       }
