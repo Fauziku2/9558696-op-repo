@@ -36,14 +36,16 @@ pipeline {
         sh '''#!/bin/bash
         curl -Is http://localhost:33200 | head -n 1 > /tmp/qa-result-file
         grep 'HTTP/1.1 200 OK' /tmp/qa-result-file || { echo "QA test failed"; exit 1; }
-        '''      }
+        '''
+        echo 'Op-9558696J-S2: Checking on whether QA server is running after update'
+      }
     }
 
     stage('Op-9558696J-S3: Rollout or Rollback?') {
       steps {
         script {
           def decision = input message: 'Proceed to Production deployment or Rollback?', ok: 'Continue',
-                         parameters: [choice(name: 'ACTION', choices: ['Proceed', 'Rollback'], description: 'Choose your next step')]
+                         parameters: [choice(name: 'ACTION', choices: ['Proceed to Roll out to Prod server', 'Rollback QA server'], description: 'Choose your next step')]
           if (decision == 'Rollback') {
             sh '''#!/bin/bash
             # Stop and Remove current QA container
@@ -59,7 +61,10 @@ pipeline {
             # Install and start SSH inside container
             docker exec 9558696j-qa-svr bash -c "apt-get update && apt-get install -y openssh-server && service ssh start && service apache2 start"
             '''
-            error("Op-9558696J-S3: QA server fails after update and is rolled back")
+            echo 'Op-9558696J-S3: QA server fails after update and is rolled back'
+            error('Aborting')
+          } else {
+            echo 'Op-9558696J-S3: Proceed to roll out to Prod server'
           }
         }
       }
@@ -102,9 +107,18 @@ pipeline {
                          parameters: [choice(name: 'ACTION', choices: ['All Good', 'Rollback'], description: 'Final decision')]
           if (decision == 'Rollback') {
             sh '''#!/bin/bash
-            docker stop 9558696j-prod-svr
-            docker rm 9558696j-prod-svr
-            docker run -d -p 32701:80 --name 9558696j-prod-svr qa-bkup-image
+            # Stop and Remove current Prod container
+            docker stop 9558696j-prod-svr || true
+            docker rm 9558696j-prod-svr || true
+
+            # Create new QA container from backup image
+            docker run -dit --name 9558696j-prod-svr --hostname=9558696j-prod-svr.localdomain --net customnetwork --ip 192.168.100.220 -p 33500:80 prod-bkup-image /bin/bash
+
+            # Give the container time to initialise
+            sleep 5
+
+            # Install and start SSH inside container
+            docker exec 9558696j-prod-svr bash -c "apt-get update && apt-get install -y openssh-server && service ssh start && service apache2 start"
             '''
             echo 'Op-9558696J-S6: Rollback to QA image done'
           } else {
