@@ -33,12 +33,15 @@ pipeline {
 
     stage('Op-9558696J-S2: curl test on QA') {
       steps {
-        sh '''#!/bin/bash
+        # sh '''#!/bin/bash
+        # curl -Is http://localhost:33200 | head -n 1 > /tmp/qa-result-file
+        # def qaStatus = sh(script: "grep 'HTTP/1.1 200 OK' /tmp/qa-result-file", returnStatus: true)
+        # result=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:32700/index.html)
+        # echo "QA curl response: {qaStatus}"
+        # '''
         curl -Is http://localhost:33200 | head -n 1 > /tmp/qa-result-file
         def qaStatus = sh(script: "grep 'HTTP/1.1 200 OK' /tmp/qa-result-file", returnStatus: true)
-        # result=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:32700/index.html)
         echo "QA curl response: {qaStatus}"
-        '''
       }
     }
 
