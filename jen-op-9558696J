@@ -54,6 +54,9 @@ pipeline {
             # Create new QA container from backup image
             docker run -dit --name 9558696j-qa-svr --hostname=9558696j-qa-svr.localdomain --net customnetwork --ip 192.168.100.110 -p 33200:80 qa_bkup_image /bin/bash
 
+            # Install and start SSH inside container
+            docker exec 9558696j-qa-svr bash -c "apt update && apt install -y openssh-server && service ssh start"
+
             # Locate and run the bolt script
             locate_script='/tmp/operate/9558696J/9558696J-op-repo/9558696J_script'
             bolt script run $locate_script -t 9558696j-qa-svr.localdomain -u clientadm -p user123 --no-host-key-check --run-as root --no-tty
