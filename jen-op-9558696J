@@ -52,7 +52,7 @@ pipeline {
             docker rm 9558696j-qa-svr || true
 
             # Create new QA container from backup image
-            docker run -dit --name 9558696j-qa-svr --hostname=9558696j-qa-svr.localdomain --net customnetwork --ip 192.168.100.110 -p 33200:80 qa_bkup_image /bin/bash
+            docker run -dit --name 9558696j-qa-svr --hostname=9558696j-qa-svr.localdomain --net customnetwork --ip 192.168.100.110 -p 33200:80 qa-bkup-image /bin/bash
 
             # Install and start SSH inside container
             docker exec 9558696j-qa-svr bash -c "apt update && apt install -y openssh-server && service ssh start"
