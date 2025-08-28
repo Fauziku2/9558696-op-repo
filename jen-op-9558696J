@@ -56,10 +56,10 @@ pipeline {
 
     stage('Op-9558696J-S2') {
       steps {
-        sh '''#!/bin/bash
+        sh """#!/bin/bash
         curl -Is http://localhost:$QA_PORT | head -n 1 > /tmp/qa-result-file
         grep 'HTTP/1.1 200 OK' /tmp/qa-result-file || { echo "QA test failed"; exit 1; }
-        '''
+        """
         echo 'Op-9558696J-S2: Checking on whether QA server is running after update'
       }
     }
@@ -69,7 +69,7 @@ pipeline {
         script {
           def decision = input message: 'Proceed to Production deployment or Rollback?', ok: 'Continue',
                          parameters: [choice(name: 'ACTION', choices: ['Proceed to Roll out to Prod server', 'Roll back QA server'], description: 'Choose your next step')]
-          if (decision == 'Rollback') {
+          if (decision == 'Roll back QA server') {
             sh '''#!/bin/bash
             # Stop and Remove current QA container
             docker stop $QA_CONTAINER || true
@@ -128,7 +128,7 @@ pipeline {
         script {
           def decision = input message: 'Is the Prod version working fine?', ok: 'Continue',
                          parameters: [choice(name: 'ACTION', choices: ['Proceed to release Prod web server to production', 'Roll back Prod web server'], description: 'Final decision')]
-          if (decision == 'Rollback') {
+          if (decision == 'Roll back Prod web server') {
             sh '''#!/bin/bash
             # Stop and Remove current Prod container
             docker stop $PROD_CONTAINER || true
