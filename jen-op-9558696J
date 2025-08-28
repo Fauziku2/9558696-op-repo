@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   stages {
-    stage('Op-9558696J-S1: Backup and Update QA') {
+    stage('Op-9558696J-S1') {
       steps {
         sh '''
         #!/bin/bash
@@ -28,10 +28,11 @@ pipeline {
         locate_script='/tmp/operate/9558696J/9558696J-op-repo/9558696J_script'
         bolt script run $locate_script -t 9558696j-qa-svr.localdomain -u clientadm -p user123 --no-host-key-check --run-as root --no-tty
         '''
+        echo 'Op-9558696J-S1: QA web server is backup and updated'
       }
     }
 
-    stage('Op-9558696J-S2: curl test on QA') {
+    stage('Op-9558696J-S2') {
       steps {
         sh '''#!/bin/bash
         curl -Is http://localhost:33200 | head -n 1 > /tmp/qa-result-file
@@ -41,11 +42,11 @@ pipeline {
       }
     }
 
-    stage('Op-9558696J-S3: Rollout or Rollback?') {
+    stage('Op-9558696J-S3') {
       steps {
         script {
           def decision = input message: 'Proceed to Production deployment or Rollback?', ok: 'Continue',
-                         parameters: [choice(name: 'ACTION', choices: ['Proceed to Roll out to Prod server', 'Rollback QA server'], description: 'Choose your next step')]
+                         parameters: [choice(name: 'ACTION', choices: ['Proceed to Roll out to Prod server', 'Roll back QA server'], description: 'Choose your next step')]
           if (decision == 'Rollback') {
             sh '''#!/bin/bash
             # Stop and Remove current QA container
@@ -70,7 +71,7 @@ pipeline {
       }
     }
 
-    stage('Op-9558696J-S4: Backup and Update Prod') {
+    stage('Op-9558696J-S4') {
       steps {
         sh '''#!/bin/bash
         # Remove old Prod backup image if exists
@@ -91,20 +92,27 @@ pipeline {
       }
     }
 
-    stage('Op-9558696J-S5: curl test on Prod') {
+    stage('Op-9558696J-S5') {
       steps {
         sh '''#!/bin/bash
         result=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:32701/index.html)
         echo "Prod curl response: $result"
         '''
       }
+      steps {
+        sh '''#!/bin/bash
+        curl -Is http://localhost:33500 | head -n 1 > /tmp/prod-result-file
+        grep 'HTTP/1.1 200 OK' /tmp/prod-result-file || { echo "Prod test failed"; exit 1; }
+        '''
+        echo 'Op-9558696J-S5: Checking on whether Prod server is running after update'
+      }
     }
 
-    stage('Op-9558696J-S6: Final rollback decision') {
+    stage('Op-9558696J-S6') {
       steps {
         script {
           def decision = input message: 'Is the Prod version working fine?', ok: 'Continue',
-                         parameters: [choice(name: 'ACTION', choices: ['All Good', 'Rollback'], description: 'Final decision')]
+                         parameters: [choice(name: 'ACTION', choices: ['Proceed to release Prod web server to production', 'Roll back Prod web server'], description: 'Final decision')]
           if (decision == 'Rollback') {
             sh '''#!/bin/bash
             # Stop and Remove current Prod container
@@ -120,15 +128,16 @@ pipeline {
             # Install and start SSH inside container
             docker exec 9558696j-prod-svr bash -c "apt-get update && apt-get install -y openssh-server && service ssh start && service apache2 start"
             '''
-            echo 'Op-9558696J-S6: Rollback to QA image done'
+            echo 'Op-9558696J-S6: Prod web server is rolled back'
+            error('Aborting')
           } else {
-            echo 'Op-9558696J-S6: Production version confirmed successful'
+            echo 'Op-9558696J-S6: Proceed to release Prod web server to production'
           }
         }
       }
     }
 
-    stage('Op-9558696J-S7: Monitor') {
+    stage('Op-9558696J-S7') {
       steps {
         echo 'Op-9558696J-S7: Prod web server is monitored and ready to serve.'
       }
