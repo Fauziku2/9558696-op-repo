@@ -58,7 +58,7 @@ pipeline {
             sleep 5
 
             # Install and start SSH inside container
-            docker exec 9558696j-qa-svr bash -c "apt update && apt install -y openssh-server && service ssh start"
+            docker exec 9558696j-qa-svr bash -c "apt-get update && apt-get install -y openssh-server && service ssh start"
 
             # Locate and run the bolt script
             locate_script='/tmp/operate/9558696J/9558696J-op-repo/9558696J_script'
