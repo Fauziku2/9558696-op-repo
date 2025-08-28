@@ -33,10 +33,10 @@ pipeline {
 
     stage('Op-9558696J-S2: curl test on QA') {
       steps {
+        sh '''#!/bin/bash
         curl -Is http://localhost:33200 | head -n 1 > /tmp/qa-result-file
-        def qaStatus = sh(script: "grep 'HTTP/1.1 200 OK' /tmp/qa-result-file", returnStatus: true)
-        echo "QA curl response: {qaStatus}"
-      }
+        grep 'HTTP/1.1 200 OK' /tmp/qa-result-file || { echo "QA test failed"; exit 1; }
+        '''      }
     }
 
     stage('Op-9558696J-S3: Rollout or Rollback?') {
